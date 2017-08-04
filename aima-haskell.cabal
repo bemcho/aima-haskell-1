@@ -80,6 +80,7 @@ Library
                         AI.Test.Util
                         AI.Util.Array
                         AI.Util.Graph
+                        AI.Util.GraphMap
                         AI.Util.Matrix
                         AI.Util.ProbDist
                         AI.Util.Queue
