@@ -10,7 +10,7 @@ import qualified System.Random as R
 import Control.Concurrent.STM
 import Control.DeepSeq
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.Random
 import Data.Map (Map, (!))
 import System.CPUTime
@@ -201,7 +201,7 @@ transpose xs = if or (map null xs)
 -- |Return all lists of 'Bool' of length @n@. For example,
 --
 --  >>> bools 2
---  [[True,True],[True,False],[False,True],[False,False]] 
+--  [[True,True],[True,False],[False,True],[False,False]]
 --
 --  The returned list has length @2 ^ n@.
 bools :: Int -> [[Bool]]
@@ -273,7 +273,7 @@ trapError :: MonadError e m => m () -> m ()
 trapError c = c `catchError` \_ -> return ()
 
 --------------------------
--- Random Numbers (New) -- 
+-- Random Numbers (New) --
 --------------------------
 
 -- |Chooses a single element from a list at random, returning the element
@@ -345,7 +345,7 @@ probabilityIO :: (R.Random a, Ord a, Num a) => a -> IO Bool
 probabilityIO p = randomIO >>= \q -> return $! if q < p then True else False
 
 --------------------
--- IO Combinators -- 
+-- IO Combinators --
 --------------------
 
 -- |Read a line from stdin and return it.

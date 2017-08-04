@@ -1,10 +1,10 @@
 module AI.Test.Util where
 
-import Data.Packed.Vector
-import Data.Packed.Matrix
 import Foreign.Storable
-import Numeric.Container
+import Numeric.LinearAlgebra
 import Test.QuickCheck hiding ((><))
+
+import AI.Util.Matrix
 
 arbitraryGaussianVector :: Int -> Gen (Vector Double)
 arbitraryGaussianVector n = do
@@ -20,7 +20,8 @@ arbitraryGaussianMatrix :: (Int,Int) -> Gen (Matrix Double)
 arbitraryGaussianMatrix (n,m) = do
     seed  <- arbitrary
     let mu  = constant 0 m
-        cov = ident m
+        -- An identity matrix should be hermitian
+        cov = trustSym (ident m)
     return (gaussianSample seed n mu cov)
 
 arbitraryUniformMatrix :: (Int,Int) -> Gen (Matrix Double)

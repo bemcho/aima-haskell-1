@@ -1,9 +1,10 @@
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module AI.Logic.Propositional where
 
 import Control.Applicative ((<$>))
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.State
 import Data.Map (Map, (!))
 import Text.ParserCombinators.Parsec
@@ -92,7 +93,7 @@ instance KB DefClauseKB DefiniteClause Bool where
         then fcEntails cs (conclusion c)
         else False
     askVars           = undefined
-    axioms  (DC cs)   = cs 
+    axioms  (DC cs)   = cs
 
 -----------------------------------
 -- Propositional Logic Utilities --
@@ -148,11 +149,11 @@ ttEntails s t = and $ ttCheck (s `Implies` t)
 --  models.
 ttCheck :: PLExpr -> [Bool]
 ttCheck expr = map check $ allModels (vars expr)
-    where   
+    where
         check model = case plTrue model expr of
             Nothing -> error "Should never see this."
             Just v  -> v
-            
+
         allModels vars = map (zip vars) (bools $ length vars)
 
 -- |Is the propositional sentence a tautology - is it true in all possible
@@ -311,7 +312,7 @@ data DefiniteClause = DefiniteClause { premises :: [Symbol]
                                      , conclusion :: Symbol } deriving (Eq,Ord)
 
 instance Show DefiniteClause where
-    show (DefiniteClause []   hd) = hd 
+    show (DefiniteClause []   hd) = hd
     show (DefiniteClause body hd) =
         (concat $ L.intersperse " & " body) ++ " => " ++ hd
 
@@ -401,7 +402,7 @@ parens p = do
     spaces >> char ')'
     return x
 
-table = 
+table =
     [ [prefix "~" Not]
     , [binary "&" (\x y -> And [x,y]) AssocLeft]
     , [binary "|" (\x y -> Or [x,y]) AssocLeft]

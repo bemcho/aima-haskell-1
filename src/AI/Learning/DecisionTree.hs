@@ -37,15 +37,19 @@ data DTree a i b = Result b
 
 instance Show b => Show (DTree a i b) where
     show (Result b) = show b
-    show (Decision att _ ts) = 
+    show (Decision att _ ts) =
         "Decision " ++ show att ++ " " ++ show (M.elems ts)
 
 instance Functor (DTree a i) where
     fmap f (Result b) = Result (f b)
     fmap f (Decision att i branches) = Decision att i (fmap (fmap f) branches)
 
+instance Applicative (DTree a i) where
+    pure = Result
+    (<*>) = ap
+
 instance Monad (DTree a i) where
-    return b = Result b
+    return = pure
     Result b          >>= f = f b
     Decision att i ts >>= f = Decision att i (fmap (>>=f) ts)
 
@@ -145,7 +149,7 @@ maxDecisions _ r = r
 -- |Prune decisions using a predicate.
 prune :: (b -> Bool) -> DTree a b b -> DTree a b b
 prune _ (Result b)          = Result b
-prune p (Decision att i ts) = 
+prune p (Decision att i ts) =
     if p i
     then Result i
     else Decision att i (fmap (prune p) ts)
@@ -161,7 +165,7 @@ mcr :: Eq b =>
     -> [a]          -- List of elements to be classified
     -> [b]          -- List of correct classifications
     -> Double       -- Misclassification rate
-mcr predfun as bs = 
+mcr predfun as bs =
     let bsPred     = map predfun as
         numCorrect = countIf id (zipWith (==) bs bsPred)
         numTotal   = length as

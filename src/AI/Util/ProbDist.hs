@@ -4,7 +4,7 @@ module AI.Util.ProbDist where
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Random
+import Control.Monad.Random (getRandomR, MonadRandom)
 import Data.Map (Map)
 import GHC.Float
 

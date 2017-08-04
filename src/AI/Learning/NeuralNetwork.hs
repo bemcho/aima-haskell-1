@@ -12,7 +12,6 @@ module AI.Learning.NeuralNetwork
 
 import Control.Monad.Random hiding (fromList)
 import Numeric.LinearAlgebra
-import Numeric.LinearAlgebra.Util
 import System.IO.Unsafe
 
 import AI.Learning.Core
@@ -47,7 +46,7 @@ fromVector (k,h,l) vec = NN theta0 theta1
           theta1 = reshape l $ dropVector ((k + 1) * h) vec
 
 toVector :: Matrix Double -> Matrix Double -> Vector Double
-toVector theta0 theta1 = join [flatten theta0, flatten theta1]
+toVector theta0 theta1 = vjoin [flatten theta0, flatten theta1]
 
 ----------------------
 -- NN Train/Predict --
@@ -117,9 +116,9 @@ nnBackProp :: NeuralNetwork                                 -- neural net
 nnBackProp (NN _ theta1) y (a0,a1,a2) = (dropColumns 1 delta0, delta1)
     where
         d2     = a2 - y
-        d1     = (d2 <> trans theta1) * a1 * (1 - a1)
-        delta0 = trans a0 <> d1
-        delta1 = trans a1 <> d2
+        d1     = (d2 <> tr' theta1) * a1 * (1 - a1)
+        delta0 = tr' a0 <> d1
+        delta1 = tr' a1 <> d2
 
 -- |Perform back and forward propagation through a neural network, returning the
 --  final predictions (variable /a2/) and the gradient matrices (variables
@@ -153,7 +152,9 @@ nnCostGradient shape y x lambda vec = (cost, grad)
         grad2 = lambda `scale` toVector (insertNils theta0) (insertNils theta1)
 
         normMatrix m = sumMatrix $ (dropRows 1 m) ^ 2
-        insertNils m = vertcat [0, dropRows 1 m]
+        -- TODO: make sure this is correct behavior.
+        -- Instead of overloading 0, we now explcitly create a single row of 0's.
+        insertNils m = vertcat [fromLists [replicate (rows m) 0], dropRows 1 m]
 
 nnCost shape y x lambda = fst . nnCostGradient shape y x lambda
 nnGrad shape y x lambda = snd . nnCostGradient shape y x lambda
@@ -165,7 +166,7 @@ nnGradApprox :: NNShape -> Matrix Double -> Matrix Double -> Double -> Vector Do
 nnGradApprox shape y x lambda vec = fromList $ g `map` [0..n-1]
     where
         h = 1e-6
-        n = dim vec
+        n = size vec
         f v = nnCost shape y x lambda v
         g i = (f (vec + e i) - f (vec - e i)) / (2*h)
         e i = fromList $ replicate i 0 ++ [h] ++ replicate (n-i-1) 0
@@ -191,7 +192,7 @@ testFwdProp = do
     let y = nnPredict nn x
     putStrLn "Predictions (should be roughly 0.0, 0.5, 1.0)"
     disp 2 y
-    
+
 testBackProp :: IO ()
 testBackProp = do
     putStrLn "***\nCompare back propagation to the MATLAB implementation.\n"
@@ -224,7 +225,7 @@ test n lambda = do
     putStrLn "***\nLearning XOR function.\n"
     x <- rand n 2
     e <- fmap (0.01*) (rand n 1)
-    let y = mapMatrix (\x -> if x > 0.5 then 1.0 else 0.0) (xor x)
+    let y = cmap (\x -> if x > 0.5 then 1.0 else 0.0) (xor x)
     nn <- nnTrainIO 4 y x lambda
     let ypred = nnPredict nn x
     -- Show predictions
@@ -237,7 +238,7 @@ test n lambda = do
         yy = nnPredict nn xx
     putStrLn "Exclusive or:"
     disp 2 $ horzcat [xx,yy]
-    
+
 xor :: Matrix Double -> Matrix Double
 xor x = let [u,v] = toColumns x in asColumn (u + v - 2 * u * v)
-    
+

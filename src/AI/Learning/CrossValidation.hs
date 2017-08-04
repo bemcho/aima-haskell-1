@@ -1,8 +1,10 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE UndecidableInstances #-}
 module AI.Learning.CrossValidation where
 
 import Control.Monad.Random
 import Foreign.Storable (Storable)
-import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra hiding (Indexable)
 import qualified Data.List as L
 
 import AI.Util.Matrix
@@ -16,16 +18,16 @@ class Indexable c where
     index :: c -> Index -> c
     nobs :: c -> Int
 
-instance Storable a => Indexable (Vector a) where
+instance (Storable a, Container Vector a) => Indexable (Vector a) where
     index = subRefVec
-    nobs = dim
+    nobs = size
 
 instance Element a => Indexable (Matrix a) where
     index = subRefRows
     nobs = rows
 
 instance Indexable [a] where
-    index = map . (!!) 
+    index = map . (!!)
     nobs = length
 
 -- |Indexes are lists of 'Int'. Should refactor this to use something more
@@ -38,7 +40,7 @@ data CVPartition = CVPartition [(Index, Index)]
 -- |Specify what type of cross-validation you want to do.
 data CVType = LeaveOneOut
             | KFold Int
-    
+
 -- |Prediction function. A prediction function should take a training and a test
 --  set, and use the training set to build a model whose performance is
 --  evaluated on the test set, returning a final score as a 'Double'.
@@ -79,7 +81,7 @@ cvp n k = do
 -- |Perform k-fold cross-validation. Given a 'CVPartition' containing a list
 --  of training and test sets, we repeatedly fit a model on the training set
 --  and test its performance on the test set/
-kFoldCV_ :: (Indexable a, Indexable b) => 
+kFoldCV_ :: (Indexable a, Indexable b) =>
             CVPartition
          -> PredFun a b
          -> a

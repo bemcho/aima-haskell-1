@@ -1,7 +1,6 @@
 module AI.Learning.LogisticRegression where
 
 import Numeric.LinearAlgebra
-import Numeric.LinearAlgebra.Util
 
 import AI.Learning.Core
 import AI.Util.Matrix
@@ -15,7 +14,7 @@ import AI.Util.Matrix
 --  Typically the values in the vector /y/ are either boolean (i.e. 0/1) or they
 --  represent frequency of observations, i.e. they are values between 0.0 and
 --  1.0.
--- 
+--
 --  The function fits /theta/ by numerically maximizing the likelihood function.
 --  It may be subject to overfit or non-convergence in the case where the number
 --  of observations is small or the predictors are highly correlated.
@@ -56,9 +55,9 @@ lrLogLikelihood :: Vector Double             -- targets (y)
 lrLogLikelihood y x theta = (cost, grad)
     where
         m    = fromIntegral (rows x)    -- For computing average
-        h    = sigmoid (x <> theta)     -- Predictions for y
+        h    = sigmoid (x #> theta)     -- Predictions for y
         cost = sumVector (y * log h + (1-y) * log (1-h)) / m
-        grad = (1/m) `scale` (y - h) <> x
+        grad = (1/m) `scale` (y - h) <# x
 
 -- |Cost function and derivative for regularized logistic regression. This is
 --  maximized when fitting parameters for the regression.
@@ -72,8 +71,8 @@ lrLogLikRegularized y x useConst lambda theta = (cost, grad)
     where
         m      = fromIntegral (rows x)
         (c,g)  = lrLogLikelihood y x theta
-        theta' = if useConst then join [0, dropVector 1 theta] else theta
-        cost   = c - (lambda / (2 * m)) * norm theta' ^ 2
+        theta' = if useConst then vjoin [0, dropVector 1 theta] else theta
+        cost   = c - (lambda / (2 * m)) * norm_2 theta' ^ 2
         grad   = g - (lambda / m) `scale` theta'
 
 -------------
@@ -84,7 +83,7 @@ test n k lambda = do
     x <- randn n k                  -- design matrix
     e <- flatten `fmap` randn n 1   -- errors
     let theta = fromList $ 1 : replicate (k-1) 0
-        h = sigmoid $ x <> theta + e
+        h = sigmoid $ (x #> theta) + e
         y = (\i -> if i > 0.5 then 1 else 0) `mapVector` h
         theta_est1 = lr y x
         theta_est2 = lrRegularized y x False lambda

@@ -1,6 +1,7 @@
+{-# LANGUAGE FlexibleContexts #-}
 module AI.Logic.FOL where
 
-import Control.Monad.Error
+import Control.Monad.Except
 import Data.Map (Map, (!))
 import Data.Maybe (catMaybes)
 import Data.Unique
@@ -103,7 +104,7 @@ unify' x y (Just theta)
     | isVar y = unifyVar (getVar y) x theta
     | isExpr x && isExpr y =
         unify' (getArgs x) (getArgs y) (unify' (getOp x) (getOp y) (Just theta))
-    | isList x && isList y && (getLength x == getLength y) = 
+    | isList x && isList y && (getLength x == getLength y) =
         unify' (getRest x) (getRest y) (unify' (getHd x) (getHd y) (Just theta))
     | otherwise = Nothing
 
@@ -236,7 +237,7 @@ isRenaming s kb = notNull $ catMaybes $ map (stUnify [s]) (map return kb)
 
 getSubstitutions :: [Statement] -> [Statement] -> [Map String Term]
 getSubstitutions ps kb = catMaybes $ map (stUnify ps) (subsets kb)
-          
+
 ----------------------
 -- Rename Variables --
 ----------------------
@@ -427,7 +428,7 @@ parens p = do
     spaces >> char ')'
     return x
 
-table = 
+table =
     [ [prefix "~" Not]
     , [binary "&" (\x y -> And [x,y]) AssocLeft]
     , [binary "|" (\x y -> Or [x,y]) AssocLeft]

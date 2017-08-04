@@ -1,7 +1,7 @@
 module AI.Logic.Interactive where
 
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.State
 
 import qualified Data.List as L
@@ -17,7 +17,7 @@ import qualified AI.Logic.FOL as F
 -- Types --
 -----------
 
-type IOThrowsError = ErrorT LogicError IO
+type IOThrowsError = ExceptT LogicError IO
 type Logic k       = StateT k IOThrowsError
 
 -- |Run a computation of type `Logic k'. The computation represents a live
@@ -25,7 +25,7 @@ type Logic k       = StateT k IOThrowsError
 --  just want to get the side effects from storing premises in the knowledge
 --  base and querying it for new information.
 runLogic :: Logic k a -> k -> IO ()
-runLogic c s = ignoreResult $ runErrorT $ evalStateT c s
+runLogic c s = ignoreResult $ runExceptT $ evalStateT c s
 
 ----------------------
 -- Interactive Code --
@@ -68,7 +68,7 @@ runForwardChaining = do
 
 -- |Start an interaction with a first-order logic theorem prover that uses
 --  forward chaining. A typical interaction might look like this:
---  
+--
 --  >>> runFOL
 --  First Order Logic Theorem Prover (Forward Chaining)
 --  >>> tell Man(x)=>Mortal(x)

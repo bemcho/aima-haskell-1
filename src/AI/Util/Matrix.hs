@@ -6,10 +6,6 @@ import Control.Monad.Random hiding (fromList)
 import Foreign.Storable (Storable)
 import Numeric.LinearAlgebra
 
--- |Return the size of a matrix as a 2-tuple.
-size :: Matrix a -> (Int,Int)
-size x = (rows x, cols x)
-
 -- |Concatenate matrices horizontally.
 horzcat :: Element a => [Matrix a] -> Matrix a
 horzcat = fromBlocks . return
@@ -22,29 +18,31 @@ vertcat = fromBlocks . map return
 addOnes :: Matrix Double -> Matrix Double
 addOnes x = fromBlocks [[1, x]]
 
--- |Create a row matrix.
-row :: [Double] -> Matrix Double
-row = asRow . fromList
-
--- |Create a column matrix.
-column :: [Double] -> Matrix Double
-column = asColumn . fromList
-
 --------------------------
 -- Functions on Vectors --
 --------------------------
 
+constant :: Storable a => a -> Int -> Vector a
+constant a n = fromList (replicate n a)
+
 takeVector :: Storable a => Int -> Vector a -> Vector a
 takeVector n v = subVector 0 n v
 
-dropVector :: Storable a => Int -> Vector a -> Vector a
-dropVector n v = subVector n (dim v - n) v
+dropVector :: (Storable a, Container Vector a) => Int -> Vector a -> Vector a
+dropVector n v = subVector n (size v - n) v
+
+foldVector :: Storable b => (a -> b -> a) -> a -> Vector b -> a
+foldVector f acc vec = foldl f acc (toList vec)
 
 sumVector :: (Num a, Storable a) => Vector a -> a
 sumVector xs = foldVector (+) 0 xs
 
 prodVector :: (Num a, Storable a) => Vector a -> a
 prodVector xs = foldVector (*) 1 xs
+
+-- TODO: check if this can be made more efficient
+mapVector :: (Storable a, Storable b) => (a -> b) -> Vector a -> Vector b
+mapVector f = fromList . map f . toList
 
 ---------------------------
 -- Functions on Matrices --
@@ -75,8 +73,8 @@ sumMatrix = sumVector . sum . toRows
 -- Subset Referencing --
 ------------------------
 
-subRefVec :: Storable a => Vector a -> [Int] -> Vector a
-subRefVec v is = fromList $ map (v@>) is
+subRefVec :: (Storable a, Container Vector a) => Vector a -> [Int] -> Vector a
+subRefVec v is = fromList $ map (v `atIndex`) is
 
 subRefRows :: Element a => Matrix a -> [Int] -> Matrix a
 subRefRows m is = fromRows $ map (r!!) is where r = toRows m

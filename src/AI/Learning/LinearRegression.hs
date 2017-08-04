@@ -4,7 +4,6 @@ module AI.Learning.LinearRegression where
 
 import Data.List (foldl')
 import Numeric.LinearAlgebra
-import Numeric.LinearAlgebra.Util (ones)
 
 import AI.Util.Matrix
 
@@ -27,7 +26,7 @@ A linear model should contain the following information:
 * PRESS Statistic
 * R squared
 * adjusted r squared
-* 
+*
 
 -}
 
@@ -110,7 +109,7 @@ lmWith kind opts x y = LM { coefs = beta
 lmPrepare :: LMOpts
           -> Matrix Double
           -> (Matrix Double, Vector Double, Vector Double)
-lmPrepare opts x = (x3,mu,sigma) 
+lmPrepare opts x = (x3,mu,sigma)
     where
         (x1,mu,sigma) = standardize x
         x2            = if standardizeRegressors opts then x1 else x
@@ -122,7 +121,7 @@ lmPrepare opts x = (x3,mu,sigma)
 
 -- |Make predictions from a linear model.
 lmPredict :: LinearModel -> Matrix Double -> Vector Double
-lmPredict model x = x2 <> beta
+lmPredict model x = x2 #> beta
     where
         beta    = coefs model
         xbar    = lmMean model
@@ -137,7 +136,7 @@ lmPredict model x = x2 <> beta
 -- |Calculate statistics for a linear regression.
 lmStats :: LinearModel -> Matrix Double -> Vector Double -> LMStats
 lmStats model x y =
-    let ybar      = constant (mean y) (dim y)
+    let ybar      = constant (mean y) (size y)
         yhat      = lmPredict model x
         residuals = y - yhat
         covBeta   = Nothing
@@ -171,11 +170,11 @@ regress :: Matrix Double -- X
         -> Vector Double -- y
         -> Vector Double -- beta
 regress x y
-    | rows x /= dim y = error "Inconsistent dimensions -- REGRESS"
+    | rows x /= size y = error "Inconsistent dimensions -- REGRESS"
     | otherwise = let (_,n) = size x
                       (_,r) = qr x
                       rr = takeRows n r
-                   in (trans rr <> rr) <\> trans x <> y
+                   in (tr' rr <> rr) <\> tr' x #> y
 
 -- |Ridge regression. This adds a penalty term to OLS regression, which
 --  discourages large coefficient values to prevent overfitting.
@@ -185,14 +184,14 @@ ridgeRegress :: Matrix Double  -- X
              -> Double         -- lambda
              -> Vector Double  -- beta
 ridgeRegress x y useConst lambda
-    | rows x /= dim y = error "Inconsistent dimensions -- RIDGEREGRESS"
+    | rows x /= size y = error "Inconsistent dimensions -- RIDGEREGRESS"
     | otherwise = let (_,n) = size x
                       (_,r) = qr x
                       rr = takeRows n r
                       ww = if useConst
-                            then diag $ join [0, constant 1 (n-1)]
+                            then diag $ vjoin [0, constant 1 (n-1)]
                             else ident n
-                   in (trans rr <> rr + lambda `scale` ww) <\> trans x <> y
+                   in (tr' rr <> rr + lambda `scale` ww) <\> tr' x #> y
 
 -----------------
 ---- Utilities --
@@ -214,7 +213,7 @@ standardize m = (eachRow (\x -> (x - mu) / sigma) m, mu, sigma)
 --  the function discards the mean and standard deviation vectors, only
 --  returning the standardized sample.
 standardize_ :: Matrix Double -> Matrix Double
-standardize_ x = a where (a,_,_) = standardize x 
+standardize_ x = a where (a,_,_) = standardize x
 
 -------------------------
 -- Mean, Variance etc. --
@@ -231,10 +230,10 @@ class Floating b => Variance a b | a -> b where
     std x = sqrt $ var x
 
 instance Mean (Vector Double) Double where
-    mean v = sumVector v / fromIntegral (dim v)
+    mean v = sumVector v / fromIntegral (size v)
 
 instance Variance (Vector Double) Double where
-    var v  = mean $ (v - constant vbar (dim v)) ^ 2
+    var v  = mean $ (v - constant vbar (size v)) ^ 2
         where vbar = mean v
 
 instance Mean (Matrix Double) (Vector Double) where

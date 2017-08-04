@@ -1,8 +1,6 @@
 module AI.Test.Learning.LinearRegression (runAllTests) where
 
-import Data.Packed.Matrix
-import Data.Packed.Vector
-import Numeric.Container
+import Numeric.LinearAlgebra
 import Test.QuickCheck
 
 import AI.Learning.LinearRegression

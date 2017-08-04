@@ -39,6 +39,7 @@ Library
                         array,
                         gnuplot,
                         hmatrix,
+                        hmatrix-gsl,
                         QuickCheck
     Exposed-Modules:    AI.Core.Agents
                         AI.Search.Core

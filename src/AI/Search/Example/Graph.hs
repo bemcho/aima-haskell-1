@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 module AI.Search.Example.Graph where
@@ -120,7 +121,7 @@ randomGraphMap n minLinks width height = State.execStateT go (mkGraphMap [] []) 
                 sorted      = L.sortBy (O.comparing to_x) unconnected
                 to_x y      = euclideanDist (loc ! x) (loc ! y)
                 toAdd       = take (minLinks - numNbrs) sorted
-            
+
             mapM_ (addLink x) toAdd
 
         where

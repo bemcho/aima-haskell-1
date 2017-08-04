@@ -1,4 +1,8 @@
-{-# LANGUAGE MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances, TypeFamilies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE Rank2Types #-}
 
 module AI.Search.Adversarial where
 
@@ -107,7 +111,7 @@ minimaxCutoff cutoff heuristic game state = a
         maxValue depth state
             | terminalTest game state = utility game state player
             | cutoff state depth      = heuristic state player
-            | otherwise               = 
+            | otherwise               =
                 maximum [ minValue (1+depth) s | (_,s) <- successors game state ]
 
 -- |Default implementation of minimaxCutoff, that uses the default heuristic
@@ -164,7 +168,7 @@ alphaBetaCutoff cutoffTest evalFn game state = a
         minValue alpha beta depth state
             | terminalTest game state = utility game state player
             | cutoffTest state depth  = evalFn state player
-            | otherwise               = 
+            | otherwise               =
                 f posInf beta (map snd $ successors game state)
                 where
                     f v beta []     = v
@@ -177,7 +181,7 @@ alphaBetaCutoff cutoffTest evalFn game state = a
         maxValue alpha beta depth state
             | terminalTest game state = utility game state player
             | cutoffTest state depth  = evalFn state player
-            | otherwise = 
+            | otherwise =
                 g negInf alpha (map snd $ successors game state)
                 where
                     g v alpha []     = v
@@ -338,7 +342,7 @@ playGameIO game p1 p2 = go (initial game)
 -- Game Statistics --
 ---------------------
 
--- |Wrapper for a game that adds semantics for collecting statistics as the 
+-- |Wrapper for a game that adds semantics for collecting statistics as the
 --  game is played.
 data GameIO g s a = GIO
     { gameIO    :: g s a

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module AI.Learning.Bootstrap where
 
 import Control.Monad.Random
@@ -20,9 +21,9 @@ genBootstrapSample sz = go sz []
             i <- getRandomR (0,sz-1)
             go (n - 1) (i:accum)
 
-sampleVector :: (Storable a, RandomGen g) => Vector a -> Rand g (Vector a)
+sampleVector :: (Storable a, Container Vector a, RandomGen g) => Vector a -> Rand g (Vector a)
 sampleVector v = do
-    idx <- genBootstrapSample (dim v)
+    idx <- genBootstrapSample (size v)
     return (v `subRefVec` idx)
 
 sampleMatrixRows :: (Element a, RandomGen g) => Matrix a -> Rand g (Matrix a)
